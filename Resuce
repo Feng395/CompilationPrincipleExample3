@@ -1,0 +1,116 @@
+void Reduce()
+{
+  ofstream syfout("四元式.txt", ios::out | ios::app);
+  int start = 0, now = 0;
+  quaternionStack quaternion_stack; // 用于存储四元式
+  quaternion_stack.top = 0;
+  int order = 0;
+  int m = 0, n, j;
+  stateStack state_stack; // 建状态栈
+  InitStateStack(state_stack);
+  PushState(state_stack, m);
+  symbolStack symbol_stack; // 建符号栈
+  InitSymbolStack(symbol_stack);
+  PushSymbol(symbol_stack, "#");
+  // 对栈进行初始化
+  for (int i = 0; i <= num; i++)
+  {
+    showResult(state_stack, symbol_stack, i); // i+1代表已归约现在可查看新的状态
+    string temp = symbol[i];
+    j = 0;
+    while (terminals[j] != temp) // 查找终结符对应的下标
+    {
+      ++j;
+      if (j >= 19)
+      {
+        j = 2; // 如果是变量或者常量，令：j = 2，即对应终结符 i
+        break;
+      }
+    }
+    m = GetStateTop(state_stack); // 查看当前状态栈的栈顶
+    n = Action[m][j];
+    int rightLength;
+    while (n < 0)
+    {
+      n = -n;
+      if (n == 14 || n == 16 || n == 17)
+      {
+        // TODO 请填写程序语句；
+      }
+      else if (n == 1)
+      {
+        // TODO 请填写程序语句；
+      }
+      else
+        rightLength = production[n].size() - 4;
+      // cout<<"表达式"<<(n-40)<<"的右部长度为"<<rightLength<<endl;
+      //----------------------------------------------------------
+      // 四元式输出控制部分
+      string ss0, ss1, ss2;
+      string t[] = {"t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9", "t10"};
+      if (n == 10) // 当用 10.E→i 式归约时,开始建立栈
+      {
+        quaternion_stack.s[quaternion_stack.top] = symbol[i - 1];
+        ++quaternion_stack.top;
+      }
+      else if (n >= 6 && n <= 9) // 6. E→E+i 7.E→E-i 8.E→E*I 9.E→E/i
+      {
+        --quaternion_stack.top;
+        ss0 = quaternion_stack.s[quaternion_stack.top];
+        --quaternion_stack.top;
+        ss1 = quaternion_stack.s[quaternion_stack.top];
+        // TODO 请填写程序语句；
+        // TODO 请填写程序语句；
+        syfout << now << " (" << ss1 << "," << ss2 << "," << ss0 << "," << t[order]
+               << ")" << endl; // 运算的四元式
+        ++now;
+        quaternion_stack.s[quaternion_stack.top] = t[order];
+        ++quaternion_stack.top;
+        ++order;
+      }
+      else if (n == 5) // 赋值语句的四元式；5. M→i=E;
+      {
+        int l = symbol_stack.top - 4;
+        quaternion_stack.top = 0;
+        syfout << now << " (=:," << quaternion_stack.s[quaternion_stack.top]
+               << ",-," << symbol_stack.st[l] << ")" << endl;
+        ++now;
+      }
+      else if (n == 13 || n == 14 || n == 15 || n == 16) // 判断语句的四元式
+        syfout << now << " if " << symbol[i - 2] << symbol[i - 1] << symbol[i]
+               << " goto " << start << endl;
+      //------------------------------------------------------
+      for (int k = 1; k <= rightLength; k++)
+      {
+        PopSymbolTop(symbol_stack);
+        PopStateTop(state_stack);
+      }
+      // showLex(state_stack,symbol_stack,i);
+      GOTO(GetStateTop(state_stack), production[n][0], state_stack,
+           symbol_stack); // 此处用到了状态栈和符号栈的引用
+      showResult(state_stack, symbol_stack, i);
+      m = GetStateTop(state_stack); // while 循环blankCharacterzhi部分
+      n = Action[m][j];
+    }
+    if (n == 0)
+    {
+      cout << "归约出错";
+      break;
+    }
+    if (n == ACC)
+      cout << "规约成功" << endl;
+    else
+    {
+      PushState(state_stack, n);
+      // cout<<n<<endl;
+      PushSymbol(symbol_stack, temp);
+      // 每次移进后都重新输出状态栈，符号栈和符号串
+      if (quaternion_stack.top > 0)
+      {
+        quaternion_stack.s[quaternion_stack.top] = temp;
+        // cout<<quaternion_stack.s[quaternion_stack.top];
+        ++quaternion_stack.top;
+      }
+    }
+  }
+}
